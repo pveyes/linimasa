@@ -1,11 +1,10 @@
 import { DidResolver, getPds } from '@atproto/identity';
 import { AuthRequiredError, parseReqNsid, verifyJwt } from '@atproto/xrpc-server';
 import { FastifyRequest } from "fastify";
-import { Identity } from './types';
+import { Identity } from './types.js';
 
 export async function getAuthUser(
   req: FastifyRequest,
-  serviceDid: string,
   didResolver: DidResolver
 ): Promise<Identity | null> {
   const { authorization = '' } = req.headers
@@ -14,7 +13,7 @@ export async function getAuthUser(
   }
   const jwt = authorization.replace('Bearer ', '').trim()
   const nsid = parseReqNsid(req)
-  const parsed = await verifyJwt(jwt, serviceDid, nsid, async (did: string) => {
+  const parsed = await verifyJwt(jwt, null, nsid, async (did: string) => {
     return didResolver.resolveAtprotoKey(did)
   })
   

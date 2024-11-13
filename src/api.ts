@@ -76,7 +76,7 @@ server.route({
   url: "/xrpc/app.bsky.feed.getFeedSkeleton",
   handler: async (req, res) => {
     // get user from auth header
-    const identity = await getAuthUser(req, DID, didResolver);
+    const identity = await getAuthUser(req, didResolver);
     if (!identity) {
       return res.send({ feed: [] });
     }
