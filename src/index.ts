@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 // Starts the firehose subscription
-// import "./stream.js";
+import "./stream.js";
 
 // Starts the API server
 import "./api.js";

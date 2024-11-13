@@ -1,8 +1,8 @@
-import { DidResolver, MemoryCache } from "@atproto/identity";
 import Fastify from "fastify";
 import { getAuthUser } from "./auth.js";
 import { DID, HOST } from "./constants.js";
-import { getOrCreateUser, getUserBookmarks } from "./db.js";
+import { getOrCreateUser } from "./db.js";
+import { getUserBookmarks, userCache } from "./loader.js";
 
 const server = Fastify({
   logger: true,
@@ -51,12 +51,6 @@ server.route({
   },
 });
 
-const didCache = new MemoryCache()
-const didResolver = new DidResolver({
-  plcUrl: 'https://plc.directory',
-  didCache
-})
-
 // test playground
 server.route({
   method: 'GET',
@@ -80,19 +74,24 @@ server.route({
   url: "/xrpc/app.bsky.feed.getFeedSkeleton",
   handler: async (req, res) => {
     // get user from auth header
-    const identity = await getAuthUser(req, didResolver);
+    const identity = await getAuthUser(req);
     if (!identity) {
       return res.send({ feed: [] });
     }
 
-    const dbUser = await getOrCreateUser(identity)
+    const cachedUser = userCache.get(identity.did)
+    if (!cachedUser) {
+      console.log('User not found in cache, fetching from db', identity.did)
+      await getOrCreateUser(identity)
+    }
+    userCache.set(identity.did, identity)
 
     // TODO: Implement cursor
     // const { feed, cursor } = req.query as Record<string, string | undefined>;
     const { feed } = req.query as Record<string, string | undefined>;
     switch (feed) {
       case `at://${DID}/app.bsky.feed.generator/poormark`: {
-        const data = await getUserBookmarks(dbUser.did);
+        const data = await getUserBookmarks(identity.did);
         res.send({
           feed: data.map(d => {
             return {

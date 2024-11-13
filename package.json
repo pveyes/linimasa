@@ -16,14 +16,17 @@
     "@atproto/identity": "^0.4.3",
     "@atproto/xrpc-server": "^0.7.2",
     "@libsql/client": "^0.14.0",
+    "@skyware/jetstream": "^0.2.0",
     "dotenv": "^16.4.5",
     "fastify": "^5.1.0",
     "pg": "^8.13.1",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@types/pg": "^8.11.10",
+    "@types/ws": "^8.5.13",
     "inquirer": "^12.1.0"
   }
 }

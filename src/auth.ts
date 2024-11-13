@@ -1,11 +1,10 @@
-import { DidResolver, getPds } from '@atproto/identity';
+import { DidResolver, getPds, MemoryCache } from '@atproto/identity';
 import { AuthRequiredError, parseReqNsid, verifyJwt } from '@atproto/xrpc-server';
 import { FastifyRequest } from "fastify";
 import { Identity } from './types.js';
 
 export async function getAuthUser(
   req: FastifyRequest,
-  didResolver: DidResolver
 ): Promise<Identity | null> {
   const { authorization = '' } = req.headers
   if (!authorization.startsWith('Bearer ')) {
@@ -17,12 +16,17 @@ export async function getAuthUser(
     return didResolver.resolveAtprotoKey(did)
   })
   
-  return getIdentity(parsed.iss, didResolver)
+  return getIdentity(parsed.iss)
 }
+
+const didCache = new MemoryCache()
+const didResolver = new DidResolver({
+  plcUrl: 'https://plc.directory',
+  didCache
+})
 
 export async function getIdentity(
   did: string,
-  didResolver: DidResolver
 ): Promise<Identity | null> {
   const identity = await didResolver.resolve(did)
   if (!identity) {

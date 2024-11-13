@@ -1,4 +1,5 @@
 import { Agent } from "@atproto/api"
+import { PIN_EMOJI } from "./constants.js"
 import { Identity, Post } from "./types.js"
 
 export async function getExistingUserBookmarks(
@@ -20,7 +21,7 @@ export async function getExistingUserBookmarks(
 
   const bookmarks = resp.data.records.flatMap(r => {
     const post = r.value as Post
-    const isBookmark = post.text === '📌'  && post.reply?.parent.uri
+    const isBookmark = post.text === PIN_EMOJI && post.reply?.parent.uri
     if (!isBookmark) {
       return []
     }

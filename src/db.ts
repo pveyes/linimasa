@@ -64,12 +64,25 @@ export interface UserDB {
   did: string
 }
 
-export async function getOrCreateUser(identity: Identity): Promise<UserDB> {
-  const { did } = identity
-  const users = await db.execute<UserDB[]>({ sql: `SELECT * FROM users WHERE did = ?`, args: [did] })
+export async function getUser(did: string): Promise<UserDB | null> {
+  const users = await db.execute<UserDB[]>({
+    sql: `SELECT * FROM users WHERE did = ?`,
+    args: [did]
+  })
+
   if (users.length > 0) {
     return users[0]!
   };
+
+  return null
+}
+
+export async function getOrCreateUser(identity: Identity): Promise<UserDB> {
+  const { did } = identity
+  const user = await getUser(did)
+  if (user) {
+    return user
+  }
 
   await db.execute({ sql: `INSERT INTO users (did) VALUES (?)`, args: [did] })
 

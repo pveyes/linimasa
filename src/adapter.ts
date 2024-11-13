@@ -65,7 +65,7 @@ function getPgConfig(url: string): pg.ClientConfig {
 
 process.on('SIGINT', async () => {
   if (!pgPool) {
-    return
+    return process.exit(0)
   }
 
   await pgPool.end()
