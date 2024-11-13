@@ -1,6 +1,6 @@
 import { DidResolver, MemoryCache } from "@atproto/identity";
 import Fastify from "fastify";
-import { getAuthUser, getIdentity } from "./auth.js";
+import { getAuthUser } from "./auth.js";
 import { DID, HOST } from "./constants.js";
 import { getOrCreateUser, getUserBookmarks } from "./db.js";
 
@@ -63,11 +63,15 @@ server.route({
   url: '/test',
   handler: async (req, res) => {
     const did = (req.query as any).did || DID
-    const identity = (await getIdentity(did, didResolver))!
-    await getOrCreateUser(identity)
-    const bookmarks = await getUserBookmarks(identity.did)
-    res.send({ identity, bookmarks })
-  }
+    const data = await getUserBookmarks(did);
+    res.send({
+      feed: data.map(d => {
+        return {
+          post: d.post_uri
+        }
+      })
+    });
+}
 })
 
 // Construct the feed
@@ -89,11 +93,13 @@ server.route({
     switch (feed) {
       case `at://${DID}/app.bsky.feed.generator/poormark`: {
         const data = await getUserBookmarks(dbUser.did);
-        res.send({ feed: data.map(d => {
-          return {
-            post: d.uri
-          }
-        }) });
+        res.send({
+          feed: data.map(d => {
+            return {
+              post: d.post_uri
+            }
+          })
+        });
         return;
       }
       default: {

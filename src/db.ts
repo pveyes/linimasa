@@ -44,7 +44,7 @@ export async function resetDatabase() {
 }
 
 export interface BookmarkDB {
-  uri: string
+  post_uri: string
   user_did: string
 }
 
