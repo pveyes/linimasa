@@ -28,6 +28,7 @@ async function migration() {
     CREATE TABLE IF NOT EXISTS bookmarks (
       post_uri TEXT NOT NULL,
       user_did TEXT NOT NULL,
+      source_uri TEXT,
       created_at ${timestamp} DEFAULT ${currentTimestamp},
       PRIMARY KEY (post_uri, user_did)
     );
@@ -48,12 +49,12 @@ export interface BookmarkDB {
   user_did: string
 }
 
-export function addBookmark(uri: string, user_did: string) {
-  return db.execute({ sql: `INSERT INTO bookmarks (post_uri, user_did) VALUES (?, ?)`, args: [uri, user_did] })
+export function addBookmark(uri: string, user_did: string, source_uri: string) {
+  return db.execute({ sql: `INSERT INTO bookmarks (post_uri, user_did, source_uri) VALUES (?, ?, ?)`, args: [uri, user_did, source_uri] })
 }
 
 export function removeBookmark(uri: string, user_did: string) {
-  return db.execute({ sql: `DELETE FROM bookmarks WHERE post_uri = ? AND user_did = ?`, args: [uri, user_did] })
+  return db.execute({ sql: `DELETE FROM bookmarks WHERE (post_uri = ? OR source_uri = ?) AND user_did = ?`, args: [uri, uri, user_did] })
 }
 
 export async function getUserBookmarks(did: string) {
@@ -89,8 +90,8 @@ export async function getOrCreateUser(identity: Identity): Promise<UserDB> {
   // if user is new, fill up feed with their existing bookmarks
   const bookmarks = await getExistingUserBookmarks(identity)
   await db.execute({
-    sql: `INSERT INTO bookmarks (post_uri, user_did) VALUES (?, ?)`,
-    args: bookmarks.map(post_url => [post_url, did])
+    sql: `INSERT INTO bookmarks (post_uri, user_did, source_uri) VALUES (?, ?)`,
+    args: bookmarks.map(({ uri, source }) => [uri, did, source])
   })
   return { did }
 }

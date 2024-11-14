@@ -2,10 +2,15 @@ import { Agent } from "@atproto/api"
 import { PIN_EMOJI } from "./constants.js"
 import { Identity, Post } from "./types.js"
 
+interface ExistingBookmark {
+  uri: string
+  source: string
+}
+
 export async function getExistingUserBookmarks(
   identity: Identity,
   cursor?: string
-): Promise<string[]> {
+): Promise<ExistingBookmark[]> {
   const agent = new Agent(identity.pds)
   
   const resp = await agent.com.atproto.repo.listRecords({
@@ -26,7 +31,10 @@ export async function getExistingUserBookmarks(
       return []
     }
     
-    return post.reply!.parent.uri
+    return {
+      uri: post.reply!.parent.uri,
+      source: r.uri,
+    }
   })
 
   if (resp.data.cursor) {

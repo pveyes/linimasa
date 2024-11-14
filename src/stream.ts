@@ -24,7 +24,8 @@ jetstream.onCreate("app.bsky.feed.post", async (event) => {
 
   const did = event.did
   const rkey = event.commit.rkey
-  const uri = `at://${did}/app.bsky.feed.post/${rkey}`
+  const uri = post.reply.parent.uri
+  const source = `at://${did}/app.bsky.feed.post/${rkey}`
 
   // Only add to database if the user already visited the feed
   const user = await getUser(did)
@@ -32,9 +33,9 @@ jetstream.onCreate("app.bsky.feed.post", async (event) => {
     return
   }
 
-  console.log('Bookmark added for did', did, 'uri', uri)
+  console.log('Bookmark added for did', did, 'uri', uri, 'source', source)
   bookmarkCache.delete(did)
-  return addBookmark(uri, did)
+  return addBookmark(uri, did, source)
 });
 
 jetstream.onDelete("app.bsky.feed.post", async (event) => {
