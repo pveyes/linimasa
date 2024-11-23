@@ -7,7 +7,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "publish": "tsx scripts/publish.ts",
-    "unpublish": "tsx scripts/unpublish.ts"
+    "unpublish": "tsx scripts/unpublish.ts",
+    "test-feed": "tsx scripts/test-feed.ts"
   },
   "keywords": [],
   "author": "",

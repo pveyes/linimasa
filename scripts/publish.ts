@@ -2,6 +2,7 @@ import { AtpAgent, BlobRef } from '@atproto/api'
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
 import inquirer from 'inquirer'
+import { HOST } from '../src/constants.js'
 
 const run = async () => {
   dotenv.config()
@@ -53,7 +54,7 @@ const run = async () => {
     collection: 'app.bsky.feed.generator',
     rkey: 'poormark',
     record: {
-      did: 'did:web:linimasa.pvey.es',
+      did: `did:web:${HOST}`,
       displayName: 'Poormark',
       description: `Poor Man's Bookmark. Reply to any post with only 📌 to bookmark`,
       avatar: await getAvatarRef('poormark.png'),
@@ -66,7 +67,7 @@ const run = async () => {
     collection: 'app.bsky.feed.generator',
     rkey: 'jaksel',
     record: {
-      did: 'did:web:linimasa.pvey.es',
+      did: `did:web:${HOST}`,
       displayName: 'Jaksel',
       description: `Post with mix of English and Indonesian languages`,
       avatar: await getAvatarRef('jaksel.png'),
