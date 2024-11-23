@@ -2,9 +2,12 @@ import { getIdentity } from "./auth.js"
 import { LRUCache } from "./cache.js"
 import {
   BookmarkDB,
+  cursorToOffset,
   getJakselFeed as getJakselFeedDb,
   getUserBookmarks as getUserBookmarksDb,
-  getUser as getUserDb
+  getUser as getUserDb,
+  INIT_CURSOR,
+  offsetToCursor
 } from "./db.js"
 import { Identity } from "./types.js"
 
@@ -29,38 +32,20 @@ export const getUser = async (did: string) => {
   return user
 }
 
-const sharedFeedCache = new LRUCache(100)
+export const jakselFeedCache = new LRUCache<string[]>(30)
 
-const JAKSEL_FEED_KEY = 'jaksel-feed'
-
-export const jakselFeedCache = {
-  get: () => sharedFeedCache.get<string[]>(JAKSEL_FEED_KEY),
-  set: (value: string[]) => sharedFeedCache.set(JAKSEL_FEED_KEY, value),
-  delete: (uri?: string) => {
-    const feed = sharedFeedCache.get<string[]>(JAKSEL_FEED_KEY)
-    if (feed && uri) {
-      return sharedFeedCache.set(JAKSEL_FEED_KEY, feed.filter(f => f !== uri))
-    }
-    sharedFeedCache.delete(JAKSEL_FEED_KEY)
-  }
-}
-
-export const getJakselFeed = async (): Promise<string[]> => {
-  const cached = jakselFeedCache.get()
+export const getJakselFeed = async (limit: number, cursor: string = INIT_CURSOR) => {
+  const cached = jakselFeedCache.get(cursor)
   if (cached) {
-    return cached
+    const offset = cursorToOffset(cursor)
+    const nextCursor = offsetToCursor(offset + cached.length)
+    return { posts: cached, nextCursor }
   }
 
-  const feed = await getJakselFeedDb()
-  if (feed) {
-    jakselFeedCache.set(feed)
-  }
+  const { posts, nextCursor } = await getJakselFeedDb(limit, cursor)
+  jakselFeedCache.set(cursor, posts)
 
-  return feed
-}
-
-export const hasMatchingJakselFeedCache = (uri: string) => {
-  return jakselFeedCache.get()?.includes(uri)
+  return { posts, nextCursor }
 }
 
 export const bookmarkCache = new LRUCache<BookmarkDB[]>(100)

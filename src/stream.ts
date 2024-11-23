@@ -12,7 +12,6 @@ import {
 import {
   bookmarkCache,
   hasMatchingBookmarkCache,
-  hasMatchingJakselFeedCache,
   jakselFeedCache,
   removeUriFromBookmarkCache
 } from "./loader.js";
@@ -41,10 +40,6 @@ jetstream.onDelete("app.bsky.feed.post", async (event) => {
   const rkey = event.commit.rkey
   const uri = `at://${did}/app.bsky.feed.post/${rkey}`
 
-  if (hasMatchingJakselFeedCache(uri)) {
-    jakselFeedCache.delete(uri)
-  }
-  
   if (hasMatchingBookmarkCache(did, uri)) {
     removeUriFromBookmarkCache(did, uri)
   }
@@ -65,7 +60,7 @@ async function handleJakselAdded(_: AppBskyFeedPost.Record, event: CommitCreateE
   const uri = `at://${did}/app.bsky.feed.post/${rkey}`
 
   console.log('Jaksel added', uri)
-  jakselFeedCache.delete()
+  jakselFeedCache.clear()
   return addJakselFeed(uri)
 }
 

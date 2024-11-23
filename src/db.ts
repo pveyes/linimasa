@@ -76,9 +76,31 @@ export function removeJakselFeed(uri: string) {
   return db.execute({ sql: `DELETE FROM jaksel_feed WHERE uri = ?`, args: [uri] })
 }
 
-export async function getJakselFeed() {
-  const res = await db.execute<{ uri: string }[]>({ sql: `SELECT * FROM jaksel_feed ORDER BY created_at DESC` })
-  return res.map(r => r.uri)
+export async function getJakselFeed(limit: number, cursor: string) {
+  const offset = cursorToOffset(cursor)
+  const res = await db.execute<{ uri: string }[]>({ sql: `SELECT * FROM jaksel_feed ORDER BY created_at DESC LIMIT ? OFFSET ?`, args: [limit, offset] })
+
+  return {
+    posts: res.map(r => r.uri),
+    nextCursor: offsetToCursor(offset + res.length)
+  }
+}
+
+export const INIT_CURSOR = Buffer.from('init').toString('base64')
+
+// simple cursor implementation return encoded offset
+export function cursorToOffset(cursor: string) {
+  if (cursor === INIT_CURSOR) {
+    return 0
+  }
+  return cursor ? parseInt(Buffer.from(cursor, 'base64').toString('utf8').replace('cur','')) : 0
+}
+
+export function offsetToCursor(offset: number) {
+  if (offset === 0) {
+    return INIT_CURSOR
+  }
+  return Buffer.from('cur' + offset.toString()).toString('base64')
 }
 
 export interface UserDB {

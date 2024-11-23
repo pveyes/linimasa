@@ -115,10 +115,13 @@ async function handlePoormarkFeed(req: FastifyRequest, res: FastifyReply) {
   });
 }
 
-async function handleJakselFeed(_: FastifyRequest, res: FastifyReply) {
-  const data = await getJakselFeed();
+async function handleJakselFeed(req: FastifyRequest, res: FastifyReply) {
+  const query = req.query as Record<string, any>;
+  const limit = query.limit ? parseInt(query.limit) : 30;
+  const { posts, nextCursor } = await getJakselFeed(limit, query.cursor);
   res.send({
-    feed: data.map(post => {
+    cursor: nextCursor,
+    feed: posts.map(post => {
       return {
         post
       }

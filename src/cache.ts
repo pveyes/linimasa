@@ -38,4 +38,9 @@ export class LRUCache<T extends any = any> {
     this.cache.delete(key);
     this.keys = this.keys.filter(k => k !== key);
   }
+
+  clear() {
+    this.cache.clear();
+    this.keys = [];
+  }
 }
