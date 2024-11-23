@@ -65,8 +65,7 @@ async function handleJakselAdded(_: AppBskyFeedPost.Record, event: CommitCreateE
   const uri = `at://${did}/app.bsky.feed.post/${rkey}`
 
   console.log('Jaksel added', uri)
-  const feed = jakselFeedCache.get() ?? []
-  jakselFeedCache.set(feed.concat(uri))
+  jakselFeedCache.delete()
   return addJakselFeed(uri)
 }
 
