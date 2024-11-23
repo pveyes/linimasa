@@ -32,6 +32,12 @@ async function migration() {
       created_at ${timestamp} DEFAULT ${currentTimestamp},
       PRIMARY KEY (post_uri, user_did)
     );
+
+    CREATE TABLE IF NOT EXISTS jaksel_feed (
+      uri TEXT NOT NULL,
+      created_at ${timestamp} DEFAULT ${currentTimestamp},
+      PRIMARY KEY (uri)
+    );
   `)
 }
 
@@ -39,6 +45,7 @@ export async function resetDatabase() {
   await db.migrate(`
     DROP TABLE users;
     DROP TABLE bookmarks;
+    DROP TABLE jaksel_feed;
   `)
 
   await migration()
@@ -59,6 +66,19 @@ export function removeBookmark(uri: string, user_did: string) {
 
 export async function getUserBookmarks(did: string) {
   return db.execute<BookmarkDB[]>({ sql: `SELECT * FROM bookmarks WHERE user_did = ? ORDER BY created_at DESC`, args: [did]})
+}
+
+export function addJakselFeed(uri: string) {
+  return db.execute({ sql: `INSERT INTO jaksel_feed (uri) VALUES (?)`, args: [uri] })
+}
+
+export function removeJakselFeed(uri: string) {
+  return db.execute({ sql: `DELETE FROM jaksel_feed WHERE uri = ?`, args: [uri] })
+}
+
+export async function getJakselFeed() {
+  const res = await db.execute<{ uri: string }[]>({ sql: `SELECT * FROM jaksel_feed ORDER BY created_at DESC` })
+  return res.map(r => r.uri)
 }
 
 export interface UserDB {

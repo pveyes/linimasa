@@ -6,10 +6,6 @@ import inquirer from 'inquirer'
 const run = async () => {
   dotenv.config()
 
-  if (!process.env.FEEDGEN_SERVICE_DID && !process.env.FEEDGEN_HOSTNAME) {
-    throw new Error('Please provide a hostname in the .env file')
-  }
-
   const answers = await inquirer
     .prompt([
       {
@@ -22,75 +18,58 @@ const run = async () => {
         type: 'password',
         name: 'password',
         message: 'Enter your Bluesky password (preferably an App Password):',
-      },
-      {
-        type: 'input',
-        name: 'service',
-        message: 'Optionally, enter a custom PDS service to sign in with:',
-        default: 'https://bsky.social',
-        required: false,
-      },
-      {
-        type: 'input',
-        name: 'recordName',
-        message: 'Enter a short name or the record. This will be shown in the feed\'s URL:',
-        required: true,
-      },
-      {
-        type: 'input',
-        name: 'displayName',
-        message: 'Enter a display name for your feed:',
-        required: true,
-      },
-      {
-        type: 'input',
-        name: 'description',
-        message: 'Optionally, enter a brief description of your feed:',
-        required: false,
-      },
-      {
-        type: 'input',
-        name: 'avatar',
-        message: 'Optionally, enter a local path to an avatar that will be used for the feed:',
-        required: false,
-      },
+      }
     ])
 
-  const { handle, password, recordName, displayName, description, avatar, service } = answers
-
-  const feedGenDid =
-    process.env.FEEDGEN_SERVICE_DID ?? `did:web:${process.env.FEEDGEN_HOSTNAME}`
+  const { handle, password, } = answers
 
   // only update this if in a test environment
-  const agent = new AtpAgent({ service: service ? service : 'https://bsky.social' })
+  const agent = new AtpAgent({ service: 'https://pds.pvey.es' })
   await agent.login({ identifier: handle, password})
 
-  let avatarRef: BlobRef | undefined
-  if (avatar) {
-    let encoding: string
-    if (avatar.endsWith('png')) {
-      encoding = 'image/png'
-    } else if (avatar.endsWith('jpg') || avatar.endsWith('jpeg')) {
-      encoding = 'image/jpeg'
-    } else {
-      throw new Error('expected png or jpeg')
+  const getAvatarRef = async (avatar: string): Promise<BlobRef | undefined> => {
+    let avatarRef: BlobRef | undefined
+    if (avatar) {
+      let encoding: string
+      if (avatar.endsWith('png')) {
+        encoding = 'image/png'
+      } else if (avatar.endsWith('jpg') || avatar.endsWith('jpeg')) {
+        encoding = 'image/jpeg'
+      } else {
+        throw new Error('expected png or jpeg')
+      }
+      const img = await fs.readFile('thumbs/' + avatar)
+      const blobRes = await agent.api.com.atproto.repo.uploadBlob(img, {
+        encoding,
+      })
+      avatarRef = blobRes.data.blob
     }
-    const img = await fs.readFile(avatar)
-    const blobRes = await agent.api.com.atproto.repo.uploadBlob(img, {
-      encoding,
-    })
-    avatarRef = blobRes.data.blob
-  }
+
+    return avatarRef
+  }  
 
   await agent.api.com.atproto.repo.putRecord({
     repo: agent.session?.did ?? '',
     collection: 'app.bsky.feed.generator',
-    rkey: recordName,
+    rkey: 'poormark',
     record: {
-      did: feedGenDid,
-      displayName: displayName,
-      description: description,
-      avatar: avatarRef,
+      did: 'did:web:linimasa.pvey.es',
+      displayName: 'Poormark',
+      description: `Poor Man's Bookmark. Reply to any post with only 📌 to bookmark`,
+      avatar: await getAvatarRef('poormark.png'),
+      createdAt: new Date().toISOString(),
+    },
+  })
+
+  await agent.api.com.atproto.repo.putRecord({
+    repo: agent.session?.did ?? '',
+    collection: 'app.bsky.feed.generator',
+    rkey: 'jaksel',
+    record: {
+      did: 'did:web:linimasa.pvey.es',
+      displayName: 'Jaksel',
+      description: `Post with mix of English and Indonesian languages`,
+      avatar: await getAvatarRef('jaksel.png'),
       createdAt: new Date().toISOString(),
     },
   })

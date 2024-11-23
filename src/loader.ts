@@ -1,6 +1,11 @@
 import { getIdentity } from "./auth.js"
 import { LRUCache } from "./cache.js"
-import { BookmarkDB, getUserBookmarks as getUserBookmarksDb, getUser as getUserDb } from "./db.js"
+import {
+  BookmarkDB,
+  getJakselFeed as getJakselFeedDb,
+  getUserBookmarks as getUserBookmarksDb,
+  getUser as getUserDb
+} from "./db.js"
 import { Identity } from "./types.js"
 
 export const userCache = new LRUCache<Identity>(1000)
@@ -24,6 +29,40 @@ export const getUser = async (did: string) => {
   return user
 }
 
+const sharedFeedCache = new LRUCache(100)
+
+const JAKSEL_FEED_KEY = 'jaksel-feed'
+
+export const jakselFeedCache = {
+  get: () => sharedFeedCache.get<string[]>(JAKSEL_FEED_KEY),
+  set: (value: string[]) => sharedFeedCache.set(JAKSEL_FEED_KEY, value),
+  delete: (uri?: string) => {
+    const feed = sharedFeedCache.get<string[]>(JAKSEL_FEED_KEY)
+    if (feed && uri) {
+      return sharedFeedCache.set(JAKSEL_FEED_KEY, feed.filter(f => f !== uri))
+    }
+    sharedFeedCache.delete(JAKSEL_FEED_KEY)
+  }
+}
+
+export const getJakselFeed = async (): Promise<string[]> => {
+  const cached = jakselFeedCache.get()
+  if (cached) {
+    return cached
+  }
+
+  const feed = await getJakselFeedDb()
+  if (feed) {
+    jakselFeedCache.set(feed)
+  }
+
+  return feed
+}
+
+export const hasMatchingJakselFeedCache = (uri: string) => {
+  return jakselFeedCache.get()?.includes(uri)
+}
+
 export const bookmarkCache = new LRUCache<BookmarkDB[]>(100)
 
 export const getUserBookmarks = async (did: string) => {
@@ -39,3 +78,15 @@ export const getUserBookmarks = async (did: string) => {
 
   return bookmarks
 }
+
+export const hasMatchingBookmarkCache = (did: string, uri: string) => {
+  return bookmarkCache.get(did)?.some(b => b.post_uri === uri)
+}
+
+export const removeUriFromBookmarkCache = async (did: string, uri: string) => {
+  const bookmarks = bookmarkCache.get(did)
+  if (bookmarks) {
+    bookmarkCache.set(did, bookmarks.filter(b => b.post_uri !== uri))
+  }
+}
+

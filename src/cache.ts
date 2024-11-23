@@ -1,5 +1,5 @@
 
-export class LRUCache<T> {
+export class LRUCache<T extends any = any> {
 
   private maxSize: number;
   private cache: Map<string, T>;
@@ -11,7 +11,7 @@ export class LRUCache<T> {
     this.keys = [];
   }
 
-  get(key: string) {
+  get<V extends T = T>(key: string): V {
     const value = this.cache.get(key);
 
     // Put the key at the front of the list (most recently used)
@@ -20,6 +20,7 @@ export class LRUCache<T> {
       this.keys.unshift(key);
     }
 
+    // @ts-ignore
     return value;
   }
   set(key: string, value: T) {
